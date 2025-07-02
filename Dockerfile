@@ -2,7 +2,7 @@
 
 # --- STAGE 1: Composer ---
 # Kita gunakan image Composer resmi untuk menginstal dependensi secara efisien
-FROM composer:2 as composer
+FROM composer:2 AS composer
 WORKDIR /app
 COPY src/composer.json src/composer.lock ./
 # --ignore-platform-reqs agar tidak error meskipun PHP lokal berbeda
@@ -17,9 +17,10 @@ WORKDIR /app
 
 # Instal ekstensi PHP yang dibutuhkan oleh Flarum
 # Ini menyelesaikan masalah 'exif' dan lainnya secara permanen
-RUN apk add --no-cache libzip-dev && docker-php-ext-install zip \
+# [FIX]: Menambahkan dependensi sistem untuk GD (png, jpeg, freetype) dan Sockets (linux-headers).
+RUN apk add --no-cache libzip-dev libpng-dev jpeg-dev freetype-dev linux-headers \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd exif bcmath sockets intl pdo_mysql
+    && docker-php-ext-install -j$(nproc) gd zip exif bcmath sockets intl pdo_mysql
 
 # Salin file konfigurasi Nginx kustom kita
 # Ini menyelesaikan masalah routing dan error 404
@@ -30,3 +31,9 @@ COPY --chown=application:application src/ .
 
 # Salin dependensi 'vendor' yang sudah diinstal dari Stage 1
 COPY --from=composer --chown=application:application /app/vendor/ ./vendor/
+
+# [FIX] Buat direktori yang dibutuhkan oleh Flarum.
+# Direktori ini sengaja diabaikan oleh .dockerignore untuk persiapan
+# volume persisten di produksi, jadi kita buat manual di sini untuk tes lokal.
+RUN mkdir -p public/assets storage \
+    && chown -R application:application public/assets storage
