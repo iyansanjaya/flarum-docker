@@ -1,0 +1,13 @@
+# .dockerignore
+
+# Abaikan folder vendor lokal, karena kita menginstalnya di dalam Docker
+src/vendor/
+src/storage/
+src/public/assets/
+
+# Abaikan file dan folder Git
+.git/
+.gitignore
+
+# Abaikan file Docker itu sendiri
+Dockerfile
