@@ -15,9 +15,12 @@ FROM webdevops/php-nginx:8.3-alpine
 # Setel direktori kerja di dalam kontainer
 WORKDIR /app
 
+# [FIX] Beritahu Zeabur dan Docker port mana yang digunakan oleh aplikasi kita
+ENV PORT=8000
+EXPOSE 8000
+
 # Instal ekstensi PHP yang dibutuhkan oleh Flarum
 # Ini menyelesaikan masalah 'exif' dan lainnya secara permanen
-# [FIX]: Menambahkan dependensi sistem untuk GD (png, jpeg, freetype) dan Sockets (linux-headers).
 RUN apk add --no-cache libzip-dev libpng-dev jpeg-dev freetype-dev linux-headers \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd zip exif bcmath sockets intl pdo_mysql
@@ -32,8 +35,8 @@ COPY --chown=application:application src/ .
 # Salin dependensi 'vendor' yang sudah diinstal dari Stage 1
 COPY --from=composer --chown=application:application /app/vendor/ ./vendor/
 
-# [FIX] Buat direktori yang dibutuhkan oleh Flarum.
+# Buat direktori yang dibutuhkan oleh Flarum.
 # Direktori ini sengaja diabaikan oleh .dockerignore untuk persiapan
-# volume persisten di produksi, jadi kita buat manual di sini untuk tes lokal.
+# volume persisten di produksi.
 RUN mkdir -p public/assets storage \
     && chown -R application:application public/assets storage
